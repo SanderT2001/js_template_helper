@@ -50,6 +50,8 @@ class TemplateHelper {
 
         this.template = document.querySelector(selector).innerHTML;
 
+        console.log(new Template(this.template));
+
         let tpl_data_keys = this.extractTemplateDataKeys(this.template);
         this.setTemplateDataKeys(tpl_data_keys);
         return this;
@@ -103,9 +105,7 @@ class TemplateHelper {
 
     extractCodeBlocks(target_string) {
         let output = {};
-        console.log(target_string);
         let full_matches = target_string.match(/(\[\[\s*(.*?)\s*\]\])/gms); // Get all Code Blocks, [[ ]]
-        console.log(full_matches);
         for (const [full_match_index, full_match] of Object.entries(full_matches)) {
             let sanitized_match = full_match;
             sanitized_match = sanitized_match.replace(/\[\[\s?/g, ''); // Remove lookbehind {{
