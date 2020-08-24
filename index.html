@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <script type="text/javascript" src="./src/template_helper.js"></script>
+    </head>
+
+    <body>
+        <template id="tpl">
+            <div style="background-color: red; color: #ffffff;" class="container">
+                <h4>[[ ("{{ User.title }}") ? "{{User.title}}" : 'Placeholder'; ]]</h4>
+                <span>{{ User.name }}</span>
+            </div>
+        </template>
+
+        <h1>hier</h1>
+        <hr/>
+
+        <div class="ctn">
+            dsfasd
+        </div>
+    </body>
+
+    <script type="text/javascript">
+        var template = new TemplateHelper({
+            template: '#tpl',
+            container: '.ctn',
+            urls: {
+                index: 'http://lempserver/projects/js_template_helper/data.php'
+            },
+            data_guid_path: 'User.Project.id'
+        });
+        template.render();
+    </script>
+</html>
