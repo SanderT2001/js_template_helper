@@ -1,5 +1,7 @@
 <html>
     <head>
+        <script type="text/javascript" src="./src/url.js"></script>
+        <script type="text/javascript" src="./src/template_datakey.js"></script>
         <script type="text/javascript" src="./src/template_helper.js"></script>
     </head>
 
@@ -28,6 +30,27 @@
             },
             data_guid_path: 'User.Project.id'
         });
-        template.render();
+
+        fetch('http://lempserver/projects/js_template_helper/data.php')
+            .then(response => response.json())
+            .then((parsable_data) => {
+                template.render(parsable_data);
+            });
+
+function loadone() {
+    fetch('http://lempserver/projects/js_template_helper/data.php?id=1')
+            .then(response => response.json())
+            .then((parsable_data) => {
+                template.render([parsable_data], false);
+            });
+}
+
+function update() {
+    fetch('http://lempserver/projects/js_template_helper/data.php?id=1')
+            .then(response => response.json())
+            .then((parsable_data) => {
+                template.replace(2, parsable_data);
+            });
+}
     </script>
 </html>

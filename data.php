@@ -1,24 +1,37 @@
 <?php
 header('Content-Type: application/json');
-echo json_encode([
-    [
+if (isset($_GET['id'])) {
+    echo json_encode([
         'User' => [
             'title' => '',
-            'name' => 'Sander Tuinstra',
+            'name' => 'Jan Tunstra',
             'Project' => [
-                'id' => 1,
-                'name' => 'Project #1'
+                'id' => 3,
+                'name' => 'Project #3'
             ]
         ]
-    ],
-    [
-        'User' => [
-            'title' => 'Geachte mevrouw Tun',
-            'name' => 'Mev Tun',
-            'Project' => [
-                'id' => 2,
-                'name' => 'Project #1'
+    ]);
+} else {
+    echo json_encode([
+        [
+            'User' => [
+                'title' => '',
+                'name' => 'Sander Tuinstra',
+                'Project' => [
+                    'id' => 1,
+                    'name' => 'Project #1'
+                ]
+            ]
+        ],
+        [
+            'User' => [
+                'title' => 'Geachte mevrouw Tun',
+                'name' => 'Mev Tun',
+                'Project' => [
+                    'id' => 2,
+                    'name' => 'Project #1'
+                ]
             ]
         ]
-    ]
-]);
+    ]);
+}

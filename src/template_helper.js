@@ -1,84 +1,7 @@
 "use strict";
 
-// @TODO (Sander) Opsplitsen in multiple files
 // @TODO (Sander) Apart parser object?
 // @TODO (Sander) Add-Skeleton out-of-the-box support
-
-class Url {
-    /**
-     * Label for the URL
-     *
-     * @type {string|null}
-     */
-    label = null;
-    /**
-     * The actual Link (e.x. https://example.ex/
-     *
-     * @type {string|null}
-     */
-    link = null;
-
-    constructor(label, link) {
-        this.setLabel(label);
-        this.setLink(link);
-    }
-
-    getLabel() {
-        return this.label;
-    }
-
-    setLabel(label) {
-        this.label = label;
-        return this;
-    }
-
-    getLink() {
-        return this.link;
-    }
-
-    setLink(link) {
-        this.link = link;
-        return this;
-    }
-}
-
-class TemplateDataKey {
-    /**
-     * The full key in the data, e.x {{ User.name }}
-     *
-     * @type {string|null}
-     */
-    datakey = null;
-    /**
-     * The full path of where the value for this datakey is stored in the given data, e.x. User.name
-     *
-     * @type {string|null}
-     */
-    datapath = null;
-
-    constructor(datakey, datapath) {
-        this.setDataKey(datakey);
-        this.setDataPath(datapath);
-    }
-
-    getDataKey() {
-        return this.datakey;
-    }
-
-    setDataKey(datakey) {
-        this.datakey = datakey;
-        return this;
-    }
-
-    getDataPath() {
-        return this.datapath;
-    }
-
-    setDataPath(datapath) {
-        this.datapath = datapath;
-        return this;
-    }
-}
 
 class TemplateHelper {
     /**
@@ -100,12 +23,6 @@ class TemplateHelper {
      */
     container = null;
     /**
-     * A collection of Url Objects to use in this class.
-     *
-     * @type {object}
-     */
-    url_map = {};
-    /**
      * The path in the data which contains GUID data attr value to add to every parsed item.
      *
      * @type {string|null}
@@ -117,8 +34,6 @@ class TemplateHelper {
             this.setTemplate(options.template);
         if (options.container !== undefined)
             this.setContainer(options.container);
-        if (options.urls !== undefined)
-            this.setUrls(options.urls);
         if (options.data_guid_path !== undefined)
             this.setDataGuidPath(options.data_guid_path);
 
@@ -161,22 +76,6 @@ class TemplateHelper {
         return this;
     }
 
-    getUrl(url) {
-        if (this.url_map[url] === undefined)
-            throw new Error('URL Not defined');
-
-        return this.url_map[url];
-    }
-
-    setUrls(urls) {
-        let url_map = {};
-        for (const [url_label, url] of Object.entries(urls)) {
-            url_map[url_label] = new Url(url_label, url);
-        }
-        this.url_map = url_map;
-        return this;
-    }
-
     getDataGuidPath() {
         return this.data_guid_path;
     }
@@ -184,7 +83,7 @@ class TemplateHelper {
     setDataGuidPath(path) {
         this.data_guid_path = path;
 
-        this.template_data_keys.push(new TemplateDataKey('{{ AJTP.guid }}', path));
+        this.template_data_keys.push(new TemplateDataKey('{{ TH.guid }}', path));
         return this;
     }
 
@@ -218,21 +117,12 @@ class TemplateHelper {
         return output;
     }
 
-    async render(data = [], clear_container = false) {
-        if (data.length === 0) {
-            let url_obj = this.getUrl('index');
-            await fetch(url_obj.getLink())
-                .then(response => response.json())
-                .then((parsable_data) => {
-                    data = parsable_data;
-                });
-        }
-
+    render(data = [], clear_container = false) {
         let template = this.getTemplate();
-        // Alter Template with `ajtp-guid` attribute.
+        // Alter Template with `th-guid` attribute.
         if (this.getDataGuidPath() !== null) {
             let dom_fragment = document.createRange().createContextualFragment(template);
-            dom_fragment.firstElementChild.setAttribute('ajtp-guid', '{{ AJTP.guid }}');
+            dom_fragment.firstElementChild.setAttribute('th-guid', '{{ TH.guid }}');
             template = dom_fragment.firstElementChild.outerHTML;
         }
 
@@ -280,24 +170,77 @@ class TemplateHelper {
         return this;
     }
 
-    // geen calls:
-    publish() {
-    }
+    // replace is een render met een andere container
+    replace(guid, data) {
+        data = [data];
 
-    update() {
+        let element_to_replace = this.getElementByTHGuid(guid);
+        if (element_to_replace === null)
+            throw new Error(`Element with guid: ${guid} not found`);
+
+        let template = this.getTemplate();
+        // Alter Template with `th-guid` attribute.
+        if (this.getDataGuidPath() !== null) {
+            let dom_fragment = document.createRange().createContextualFragment(template);
+            dom_fragment.firstElementChild.setAttribute('th-guid', '{{ TH.guid }}');
+            template = dom_fragment.firstElementChild.outerHTML;
+        }
+
+        let data_keys_to_parse = this.getTemplateDataKeys();
+
+        let parsed_html = {};
+        for (const [data_index, data_to_parse] of Object.entries(data)) {
+            let replace_map = {};
+            for (let data_key_index in data_keys_to_parse) {
+                let template_data_key = data_keys_to_parse[data_key_index];
+                let template_data_path = template_data_key.getDataPath().split('.');
+
+                let eval_path = '';
+                let tmp_data = data_to_parse;
+                for (let template_data_path_index in template_data_path) {
+                    tmp_data = tmp_data[template_data_path[template_data_path_index]] || '';
+                }
+                replace_map[template_data_key.getDataKey()] = tmp_data;
+            }
+
+            let tmp_html = template;
+            for (const [source, replacement] of Object.entries(replace_map)) {
+                tmp_html = tmp_html.replace(source, replacement);
+            }
+            parsed_html[data_index] = tmp_html;
+        }
+
+        for (const [data_index, parsed_item] of Object.entries(parsed_html)) {
+            let replacement_map = {};
+            let code_blocks = this.extractCodeBlocks(parsed_item);
+            for (const [full, sanitized] of Object.entries(code_blocks)) {
+                replacement_map[full] = eval(sanitized);
+            }
+
+            // @TODO (Sander) 1 parse function niet meerddre keren hetzelfde
+            for (const [search, replace] of Object.entries(replacement_map)) {
+                parsed_html[data_index] = parsed_item.replace(search, replace);
+            }
+        }
+
+        element_to_replace.outerHTML = Object.values(parsed_html).join('');
+        return this;
     }
 
     remove(guid) {
-        let element = this.getElementByAjtpGuid(guid);
+        let element = this.getElementByTHGuid(guid);
         if (element === null)
             return false;
 
         element.remove();
         // Return success if the element could not be found anymore.
-        return (this.getElementByAjtpGuid(guid) === null);
+        return (this.getElementByTHGuid(guid) === null);
     }
 
-    getElementByAjtpGuid(guid) {
-        return document.querySelector(`[ajtp-guid="${guid}"]`);
+    /**
+     * @return {null}
+     */
+    getElementByTHGuid(guid) {
+        return document.querySelector(`[th-guid="${guid}"]`);
     }
 }
