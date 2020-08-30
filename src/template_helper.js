@@ -50,8 +50,6 @@ class TemplateHelper {
 
         this.template = document.querySelector(selector).innerHTML;
 
-        console.log(new Template(this.template));
-
         let tpl_data_keys = this.extractTemplateDataKeys(this.template);
         this.setTemplateDataKeys(tpl_data_keys);
         return this;
@@ -118,6 +116,24 @@ class TemplateHelper {
     }
 
     render(data = [], clear_container = false) {
+        let l = new TemplateParser(this.template).parse(data);
+        for (const [index, d] of Object.entries(l)) {
+
+            let replacement_map = {};
+            let tpl = new Template(d).setVariableLookarounds(['[[', ']]']);
+            let code_blocks = tpl.getDatakeys();
+            for (let [full, sanitized] of Object.entries(code_blocks)) {
+                full = sanitized.getDataKey();
+                sanitized = sanitized.getDataPath();
+                replacement_map[full] = eval(sanitized);
+            }
+
+            for (const [search, replace] of Object.entries(replacement_map)) {
+                l[index] = d.replace(search, replace);
+            }
+        }
+
+        /*
         let template = this.getTemplate();
         // Alter Template with `th-guid` attribute.
         if (this.getDataGuidPath() !== null) {
@@ -162,11 +178,12 @@ class TemplateHelper {
                 parsed_html[data_index] = parsed_item.replace(search, replace);
             }
         }
+        */
 
         if (clear_container === true)
             this.getContainer().innerHTML = '';
 
-        this.getContainer().innerHTML += Object.values(parsed_html).join('');
+        this.getContainer().innerHTML += Object.values(l).join('');
         return this;
     }
 

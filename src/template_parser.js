@@ -15,6 +15,13 @@ class Template {
      */
     variable_lookarounds = ['{{', '}}'];
 
+    /**
+     * The found keys in the @see Template.definition that contains the data.
+     *
+     * @type {array}
+     */
+    datakeys = [];
+
     constructor(definition) {
         this.setDefinition(definition);
     }
@@ -27,8 +34,6 @@ class Template {
         if (typeof definition !== 'string')
             throw new Error('Template Definition must be a string');
 
-        this.setVariableLookarounds(['[[', ']]', ]);
-
         this.definition = definition;
         return this;
     }
@@ -37,40 +42,92 @@ class Template {
         return this.variable_lookarounds;
     }
 
+    getVariableLookaround(type) {
+        if (
+            type !== 'lookbehind' &&
+            type !== 'lookahead'
+        ) {
+            throw new Error('Type must be "lookbehind" or "lookahead"');
+        }
+
+        let lookarounds = this.variable_lookarounds;
+        return (type === 'lookbehind') ? lookarounds[0] : lookarounds[1];
+    }
+
     setVariableLookarounds(lookarounds) {
         if (typeof lookarounds !== 'object')
             throw new Error('Template Lookarounds must be of type array');
         if (lookarounds.length !== 2)
             throw new Error('Template Lookarounds must only contain the lookbehind (e.x. "{{") and lookahead (e.x. "}}")');
 
+        for (const [index, lookaround] of Object.entries(lookarounds)) {
+            if (
+                lookaround.includes('[') === false &&
+                lookaround.includes(']') === false
+            )
+                continue;
+
+            // Add Regex Slashes
+            let regex_compatible_lookaround = '';
+            let exploded = lookaround.split('');
+            for (const [char_index, lookaround_char] of Object.entries(exploded)) {
+                regex_compatible_lookaround += '\\' + lookaround_char;
+            }
+            lookarounds[index] = regex_compatible_lookaround;
+        }
+
         this.variable_lookarounds = lookarounds;
         return this;
+    }
+
+    getDatakeys() {
+        if (this.datakeys.length === 0)
+            this.setDatakeys(this.extractDatakeys());
+
+        return this.datakeys;
+    }
+
+    setDatakeys(datakeys) {
+        this.datakeys = datakeys;
+        return this;
+    }
+
+    extractDatakeys() {
+        let lookbehind = this.getVariableLookaround('lookbehind');
+        let lookahead  = this.getVariableLookaround('lookahead');
+
+        let data_keys = [];
+        let regex = new RegExp(`(${lookbehind}(.*?)${lookahead})`, 'gm');
+        // Get all the DAta Keys from the definition
+        let full_matches = this.getDefinition().match(regex);
+        for (const [full_match_index, full_match] of Object.entries(full_matches)) {
+            let sanitized_match = full_match;
+
+            // Remove lookbehind, e.x. {{
+            let replace_lookbehind_regex = new RegExp(`${lookbehind}\s?`, 'g');
+            sanitized_match = sanitized_match.replace(replace_lookbehind_regex, '').trim();
+
+            // Remove lookahead, e.x. }}
+            let replace_lookahead_regex = new RegExp(`\s?${lookahead}`, 'g');
+            sanitized_match = sanitized_match.replace(replace_lookahead_regex, '').trim();
+
+            // Create new TemplateDataKey Object.
+            let tpl_data_key_obj = new TemplateDataKey(full_match, sanitized_match);
+            data_keys.push(tpl_data_key_obj);
+        }
+        return data_keys;
     }
 }
 
 class TemplateParser {
-    // alleen parsen
-
     /**
-     * The Template which contains the Template Characters.
-     *
-     * @type {string/HTML|null}
+     * @type {TemplateParser}
      */
     template = null;
-    /**
-     * The Characters in the Template string that define a Template Variable
-     */
-    template_var = ['{{', '}}'];
-    /**
-     * A collection of TemplateDataKey Objects.
-     *
-     * @type {array}
-     */
-    template_data_keys = [];
 
-    constructor(template, template_chars = ['{{', '}}']) {
+    constructor(template) {
         this.setTemplate(template);
-        this.setTemplateChars(template_chars);
+
         return this;
     }
 
@@ -78,36 +135,42 @@ class TemplateParser {
         return this.template;
     }
 
-    setTemplate(selector) {
-        if (document.querySelector(selector) === null)
-            return this;
-
-        this.template = document.querySelector(selector).innerHTML;
-
-        let tpl_data_keys = this.extractTemplateDataKeys(this.template);
-        this.setTemplateDataKeys(tpl_data_keys);
+    setTemplate(template) {
+        this.template = new Template(template);
         return this;
     }
 
-    extractTemplateDataKeys(target_string) {
-        let data_keys = [];
-        let full_matches = target_string.match(/({{(.*?)}})/gm); // Get all Template Keys, {{ }}
-        for (const [full_match_index, full_match] of Object.entries(full_matches)) {
-            let sanitized_match = full_match;
-            sanitized_match = sanitized_match.replace(/{{\s?/g, ''); // Remove lookbehind {{
-            sanitized_match = sanitized_match.replace(/\s?}}/g, ''); // Remove lookahead }}
+    parse(data) {
+        let datakeys = this.getTemplate().getDatakeys();
 
-            let tpl_data_key_obj = new TemplateDataKey(full_match, sanitized_match);
-            data_keys.push(tpl_data_key_obj);
+        let parsed_template = {};
+        for (const [data_index, data_to_parse] of Object.entries(data)) {
+            let replace_map = {};
+            for (const [data_key_index, template_data_key] of Object.entries(datakeys)) {
+                let template_data_path = template_data_key.getDataPath().split('.');
+
+                let tmp_data = data_to_parse;
+                for (let template_data_path_index in template_data_path) {
+                    tmp_data = tmp_data[template_data_path[template_data_path_index]] || '';
+                }
+                replace_map[template_data_key.getDataKey()] = tmp_data;
+            }
+
+            // Parse data keys in template
+            let tmp_tpl = this.getTemplate().getDefinition();
+            for (const [source, replacement] of Object.entries(replace_map)) {
+                tmp_tpl = tmp_tpl.replace(source, replacement);
+            }
+            parsed_template[data_index] = tmp_tpl;
         }
-        return data_keys;
+        return parsed_template;
     }
 
     /*
     render(data = [], clear_container = false) {
         let data_keys_to_parse = this.getTemplateDataKeys();
 
-        let parsed_html = {};
+        let parsed_template = {};
         for (const [data_index, data_to_parse] of Object.entries(data)) {
             let replace_map = {};
             for (let data_key_index in data_keys_to_parse) {
@@ -126,10 +189,10 @@ class TemplateParser {
             for (const [source, replacement] of Object.entries(replace_map)) {
                 tmp_html = tmp_html.replace(source, replacement);
             }
-            parsed_html[data_index] = tmp_html;
+            parsed_template[data_index] = tmp_html;
         }
 
-        for (const [data_index, parsed_item] of Object.entries(parsed_html)) {
+        for (const [data_index, parsed_item] of Object.entries(parsed_template)) {
             let replacement_map = {};
             let code_blocks = this.extractCodeBlocks(parsed_item);
             for (const [full, sanitized] of Object.entries(code_blocks)) {
@@ -138,14 +201,14 @@ class TemplateParser {
 
             // @TODO (Sander) 1 parse function niet meerddre keren hetzelfde
             for (const [search, replace] of Object.entries(replacement_map)) {
-                parsed_html[data_index] = parsed_item.replace(search, replace);
+                parsed_template[data_index] = parsed_item.replace(search, replace);
             }
         }
 
         if (clear_container === true)
             this.getContainer().innerHTML = '';
 
-        this.getContainer().innerHTML += Object.values(parsed_html).join('');
+        this.getContainer().innerHTML += Object.values(parsed_template).join('');
         return this;
     }
     */
