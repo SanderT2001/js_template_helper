@@ -8,12 +8,6 @@ class TemplateHelper {
      */
     template = null;
     /**
-     * A collection of TemplateDataKey Objects.
-     *
-     * @type {array}
-     */
-    template_data_keys = [];
-    /**
      * The Container of where the parsed HTML should be placed in.
      *
      * @type {DOM-Node|null}
