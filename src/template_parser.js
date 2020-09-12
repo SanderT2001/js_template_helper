@@ -1,5 +1,8 @@
 "use strict";
 
+/**
+ * @uses template
+ */
 class TemplateParser {
     /**
      * @type {TemplateParser}
@@ -39,9 +42,8 @@ class TemplateParser {
 
             // Parse data keys in template
             let tmp_tpl = this.getTemplate().getDefinition();
-            for (const [source, replacement] of Object.entries(replace_map)) {
+            for (const [source, replacement] of Object.entries(replace_map))
                 tmp_tpl = tmp_tpl.replace(source, replacement);
-            }
             parsed_template[data_index] = tmp_tpl;
         }
         return parsed_template;

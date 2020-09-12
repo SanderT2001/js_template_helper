@@ -3,6 +3,7 @@ header('Content-Type: application/json');
 if (isset($_GET['id'])) {
     echo json_encode([
         'User' => [
+            'id' => 1,
             'title' => '',
             'name' => 'Jan Tunstra',
             'Project' => [
@@ -15,6 +16,7 @@ if (isset($_GET['id'])) {
     echo json_encode([
         [
             'User' => [
+                'id' => 10,
                 'title' => '',
                 'name' => 'Sander Tuinstra',
                 'Project' => [
@@ -25,6 +27,7 @@ if (isset($_GET['id'])) {
         ],
         [
             'User' => [
+                'id' => 110,
                 'title' => 'Geachte mevrouw Tun',
                 'name' => 'Mev Tun',
                 'Project' => [
