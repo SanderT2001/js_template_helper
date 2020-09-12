@@ -97,7 +97,7 @@ class Template {
         let lookahead  = this.getVariableLookaround('lookahead');
 
         let data_keys = [];
-        let regex = new RegExp(`(${lookbehind}(.*?)${lookahead})`, 'gm');
+        let regex = new RegExp(`(${lookbehind}\s*(.*?)\s*${lookahead})`, 'gms');
         // Get all the DAta Keys from the definition
         let full_matches = this.getDefinition().match(regex);
         for (const [full_match_index, full_match] of Object.entries(full_matches)) {
