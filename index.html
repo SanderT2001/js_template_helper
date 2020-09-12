@@ -26,14 +26,14 @@
             guid_data_attr: "id"
         });
 
-        fetch('http://lempserver/projects/js_template_helper/data.php')
+        fetch('./data.php')
             .then(response => response.json())
             .then((parsable_data) => {
                 template.render(parsable_data);
             });
 
 function loadone() {
-    fetch('http://lempserver/projects/js_template_helper/data.php?id=1')
+    fetch('./data.php?id=1')
             .then(response => response.json())
             .then((parsable_data) => {
                 template.render([parsable_data], false);
@@ -41,7 +41,7 @@ function loadone() {
 }
 
 function update() {
-    fetch('http://lempserver/projects/js_template_helper/data.php?id=1')
+    fetch('./data.php?id=1')
             .then(response => response.json())
             .then((parsable_data) => {
                 template.replace(110, parsable_data);
