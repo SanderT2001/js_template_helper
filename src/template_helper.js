@@ -1,5 +1,22 @@
 "use strict";
 
+/**
+ * Example data:
+ * ```js
+ * var example_data = [
+ *     0: {
+ *         User: {
+ *             id: 6,
+ *             name: "Sander Tuinstra",
+ *             Project: {
+ *                 id: 12,
+ *                 name: "Test Project"
+ *             }
+ *         }
+ *     }
+ * ];
+ * ```
+ */
 class TemplateHelper {
     /**
      * The Template.
@@ -14,7 +31,7 @@ class TemplateHelper {
      */
     container = null;
     /**
-     * `data-` HTML Attribute Compatible name that identifies the unique value for every parsed Template.
+     * `data-` HTML Attribute Compatible name that identifies the unique value for every earsed Template.
      *
      * @type {string|null}
      */

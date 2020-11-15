@@ -11,6 +11,7 @@
             <div data-id="{{User.id}}" style="background-color: red; color: #ffffff;" class="container">
                 <h4>[[ ("{{ User.title }}") ? "{{User.title}}" : 'Placeholder'; ]]</h4>
                 <span>{{ User.name }}</span>
+                <b>Project</b> {{ User.Project.name }}
             </div>
         </template>
 
@@ -29,6 +30,7 @@
         fetch('./data.php')
             .then(response => response.json())
             .then((parsable_data) => {
+                console.log(parsable_data);
                 template.render(parsable_data);
             });
 
