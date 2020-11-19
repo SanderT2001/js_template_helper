@@ -32,7 +32,7 @@
 
 ### Container Example
 ```html
-    <div class="container"></div>
+<div class="container"></div>
 ```
 
 ### Data Example
@@ -42,13 +42,13 @@
 
 ### Javascript Implementation Example
 ```js
-    let template = new TemplateHelper('#tpl', '.container', {
-        guid_data_attr: "id",
-        sort : {
-            field     : 'User.sort',
-            direction : 'asc'
-        }
-    });
-    const data = {}; // JSON.parse(json_string);
-    template.render(data);
+let template = new TemplateHelper('#tpl', '.container', {
+    guid_data_attr: "id",
+    sort : {
+        field     : 'User.sort',
+        direction : 'asc'
+    }
+});
+const data = {}; // JSON.parse(json_string);
+template.render(data);
 ```
