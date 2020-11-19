@@ -201,7 +201,6 @@ class TemplateHelper {
         }
 
         let output = data;
-            console.log(typeof field_data_sample);
         switch (typeof field_data_sample) {
             case 'number':
                 output.sort((a, b) => {

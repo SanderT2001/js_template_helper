@@ -1,9 +1,9 @@
 <html>
     <head>
-        <script type="text/javascript" src="./src/template_parser.js"></script>
-        <script type="text/javascript" src="./src/template_datakey.js"></script>
-        <script type="text/javascript" src="./src/template.js"></script>
-        <script type="text/javascript" src="./src/template_helper.js"></script>
+        <script type="text/javascript" src="./dist/template_parser.js"></script>
+        <script type="text/javascript" src="./dist/template_datakey.js"></script>
+        <script type="text/javascript" src="./dist/template.js"></script>
+        <script type="text/javascript" src="./dist/template_helper.js"></script>
     </head>
 
     <body>
@@ -34,7 +34,6 @@
         fetch('./data.php')
             .then(response => response.json())
             .then((parsable_data) => {
-                console.log(parsable_data);
                 template.render(parsable_data);
             });
 

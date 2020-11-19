@@ -385,8 +385,6 @@ var TemplateHelper = /*#__PURE__*/ (function () {
                 }
 
                 var output = data;
-                console.log(_typeof(field_data_sample));
-
                 switch (_typeof(field_data_sample)) {
                     case "number":
                         output.sort(function (a, b) {
