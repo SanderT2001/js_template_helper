@@ -17,6 +17,7 @@ if (isset($_GET['id'])) {
         [
             'User' => [
                 'id' => 10,
+                'sort' => 'DEF',
                 'title' => '',
                 'name' => 'Sander Tuinstra',
                 'Project' => [
@@ -28,6 +29,7 @@ if (isset($_GET['id'])) {
         [
             'User' => [
                 'id' => 110,
+                'sort' => 'ABC',
                 'title' => 'Geachte mevrouw Tun',
                 'name' => 'Mev Tun',
                 'Project' => [

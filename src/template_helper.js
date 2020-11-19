@@ -16,6 +16,17 @@
  *     }
  * ];
  * ```
+ *
+ * Example Caller:
+ * ```js
+ *      let template = new TemplateHelper('#tpl', '.ctn', {
+ *          guid_data_attr: "id",
+ *          sort : {
+ *              field     : 'User.sort',
+ *              direction : 'asc'
+ *          }
+ *      });
+ * ```
  */
 class TemplateHelper {
     /**
@@ -36,6 +47,23 @@ class TemplateHelper {
      * @type {string|null}
      */
     guid_data_attr = null;
+    /**
+     * The Sort Settings
+     *
+     * @type {object}
+     *
+     * {
+     *     [string]         field     The name of the field in the data to sort on.
+     *     [enum(asc|desc)] direction Sort Ascending (ASC) or Descending (DESC)? 
+     * }
+     *
+     * @param {string} field 
+     * @parakk
+     */
+    sort = {
+        field     : 'id',
+        direction : 'asc'
+    };
 
     constructor(template, container, options) {
         if (typeof template === 'undefined')
@@ -82,15 +110,30 @@ class TemplateHelper {
         return this;
     }
 
+    getSort() {
+        return this.sort;
+    }
+
+    setSort(settings) {
+        if (settings.field)
+            this.sort.field = settings.field;
+        if (settings.direction)
+            this.sort.direction = settings.direction;
+        return this;
+    }
+
     setOptions(options) {
         if (options.guid_data_attr)
             this.setGUIDDataAttr(options.guid_data_attr);
+        if (options.sort)
+            this.setSort(options.sort)
 
         return this;
     }
 
     render(data = [], clear_container = false) {
-        let content = this.getParsedContent(data);
+        let parsable_data = this.getSortedData(data);
+        let content = this.getParsedContent(parsable_data);
 
         if (clear_container === true)
             this.getContainer().innerHTML = '';
@@ -145,9 +188,71 @@ class TemplateHelper {
         return content;
     }
 
+    getSortedData(data = []) {
+        let first_object = data[Object.keys(data)[0]];
+        if (first_object.length === 0)
+            return data;
+
+        const sort_settings = this.getSort();
+        const sort_field_path = sort_settings.field.split('.');
+        let field_data_sample = first_object;
+        for (let sort_field_path_piece in sort_field_path) {
+            field_data_sample = field_data_sample[sort_field_path[sort_field_path_piece]] || '';
+        }
+
+        let output = data;
+            console.log(typeof field_data_sample);
+        switch (typeof field_data_sample) {
+            case 'number':
+                output.sort((a, b) => {
+                    let cmp_a = this.getDataFromObjectByPath(a, sort_settings.field, '.');
+                    let cmp_b = this.getDataFromObjectByPath(b, sort_settings.field, '.');
+
+                    return parseInt(cmp_a) - parseInt(cmp_b);
+                });
+                break;
+
+            case 'string':
+                if (isNaN(Date.parse(field_data_sample)) === false) {
+                    // Date sort
+                    output.sort((a, b) => {
+                        let cmp_a = this.getDataFromObjectByPath(a, sort_settings.field, '.');
+                        let cmp_b = this.getDataFromObjectByPath(b, sort_settings.field, '.');
+
+                        return new Date(cmp_a) - new Date(cmp_b);
+                    });
+                } else {
+                    // Normale Alphabetic sort
+                    output.sort((a, b) => {
+                        let cmp_a = this.getDataFromObjectByPath(a, sort_settings.field, '.');
+                        let cmp_b = this.getDataFromObjectByPath(b, sort_settings.field, '.');
+
+                        return cmp_a.toLowerCase().localeCompare(cmp_b.toLowerCase());
+                    });
+                }
+
+                break;
+        }
+
+        return (sort_settings.direction === 'DESC') ? output.reverse() : output;
+    }
+
     getElementByGUID(guid) {
         let data_attr = this.getGUIDDataAttr();
         let dom_selector = `[data-${data_attr}="${guid}"]`;
         return document.querySelector(dom_selector);
+    }
+
+    /**
+     * Path is splitted with dots
+     */
+    getDataFromObjectByPath(object, path, delimiter = '.') {
+        path = path.split(delimiter);
+
+        let output = object;
+        for (let path_piece in path) {
+            output = output[path[path_piece]] || '';
+        }
+        return output;
     }
 }

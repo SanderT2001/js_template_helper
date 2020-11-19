@@ -24,7 +24,11 @@
 
     <script type="text/javascript">
         var template = new TemplateHelper('#tpl', '.ctn', {
-            guid_data_attr: "id"
+            guid_data_attr: "id",
+            sort : {
+                field     : 'User.sort',
+                direction : 'asc'
+            }
         });
 
         fetch('./data.php')
